@@ -10,7 +10,7 @@ import org.hibernate.annotations.AnyDiscriminatorImplicitValues;
 public class User {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer user_id;
 	private  String email;
 	private String password;
@@ -18,11 +18,9 @@ public class User {
 	private role role;
 
 	public enum role{
-
 		USER,
 		OWNER,
 		EMPLOYEE
-
 	}
 
 }

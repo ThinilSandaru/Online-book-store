@@ -14,17 +14,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 	private final UserRepository userRepo;
 
 	public CustomUserDetailsService(UserRepository userRepo){
-
 		this.userRepo=userRepo;
-
 	}
 
 	@Override
 	public @Nullable UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-
 		User user=userRepo.findByEmail(email)
 				.orElseThrow(()->new UsernameNotFoundException("The email could not be found."));
-
 		return new CustomerUserDetails(user);
 	}
 }

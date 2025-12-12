@@ -13,35 +13,25 @@ public class CustomerUserDetails implements UserDetails {
 	private final User user;
 
 	public CustomerUserDetails(User user){
-
 		this.user=user;
-
 	}
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-
 		return List.of(new SimpleGrantedAuthority("Role_"+user.getRole()));
-
 	}
 
 	@Override
 	public @Nullable String getPassword() {
-
 		return user.getPassword();
-
 	}
 
 	@Override
 	public String getUsername() {
-
 		return user.getEmail();
-
 	}
 
 	public int getUserId(){
-
 		return user.getUser_id();
-
 	}
 }
