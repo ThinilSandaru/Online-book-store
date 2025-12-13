@@ -31,8 +31,8 @@ public class EmployeeRegisterService {
 		user.setRole(User.role.EMPLOYEE);
 
 		Employee employee=new Employee();
-		employee.setFull_name(employeeDTO.getFull_name());
-		employee.setPhone_number(employeeDTO.getPhone_number());
+		employee.setFullName(employeeDTO.getFullName());
+		employee.setPhoneNumber(employeeDTO.getPhoneNumber());
 		employee.setStatus(Employee.status.ACTIVE);
 
 		employee.setUser(user);

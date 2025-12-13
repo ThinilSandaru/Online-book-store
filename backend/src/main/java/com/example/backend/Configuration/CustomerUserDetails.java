@@ -32,6 +32,6 @@ public class CustomerUserDetails implements UserDetails {
 	}
 
 	public int getUserId(){
-		return user.getUser_id();
+		return user.getUserId();
 	}
 }
