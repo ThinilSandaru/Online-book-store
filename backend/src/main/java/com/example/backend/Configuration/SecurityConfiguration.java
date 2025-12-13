@@ -35,6 +35,7 @@ public class SecurityConfiguration {
 				.authorizeHttpRequests(req-> req
 						.requestMatchers("/register/**").permitAll()
 						.requestMatchers("/authenticate/**").permitAll()
+						.requestMatchers("/owner/**").hasRole("OWNER")
 						.anyRequest().authenticated()
 				)
 				.sessionManagement(
