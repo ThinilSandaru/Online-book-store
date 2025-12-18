@@ -11,12 +11,19 @@ public class Employee {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer employee_id;
+	@Column(name = "employee_id")
+	private Integer employeeId;
 
-	private String full_name;
+	@Column(name = "full_name")
+	private String fullName;
+
 	@Enumerated(EnumType.STRING)
+
+	@Column(name = "status")
 	private status status;
-	private String phone_number;
+
+	@Column(name = "phone_number")
+	private String phoneNumber;
 
 	@OneToOne
 	@JoinColumn(name = "user_id",referencedColumnName = "user_id")

@@ -12,12 +12,17 @@ public class User {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer user_id;
+	@Column(name = "user_id")
+	private Integer userId;
 
+	@Column(name = "email")
 	private  String email;
+
+	@Column(name = "password")
 	private String password;
 
 	@Enumerated(EnumType.STRING)
+	@Column(name = "role")
 	private role role;
 
 	@OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
