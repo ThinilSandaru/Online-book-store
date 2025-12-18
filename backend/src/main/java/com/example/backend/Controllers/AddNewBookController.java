@@ -3,10 +3,10 @@ package com.example.backend.Controllers;
 import com.example.backend.DTO.NewBookDTO;
 import com.example.backend.Services.AddNewBookService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/owner")
@@ -21,7 +21,10 @@ public class AddNewBookController {
 	}
 
 	@PostMapping("/add/new/book")
-	public ResponseEntity<?> addNewBook(@RequestBody NewBookDTO newBookDTO){
-		return ResponseEntity.ok(addNewBookService.addNewBook(newBookDTO));
+	public ResponseEntity<?> addNewBook(
+			@ModelAttribute NewBookDTO newBookDTO,
+			@RequestParam("image") MultipartFile image
+			) throws IOException {
+		return ResponseEntity.ok(addNewBookService.addNewBook(newBookDTO,image));
 	}
 }

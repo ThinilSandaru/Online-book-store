@@ -16,6 +16,7 @@ public class Book {
 	private String title;
 	private String author;
 	private Double price;
+	private String imageUrl;
 
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
 	private List<BookCopy> copies;
