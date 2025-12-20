@@ -22,43 +22,42 @@ import java.util.UUID;
 @Service
 public class AddNewBookService {
 
-	private BookRepository bookRepository;
-	private BookCopyRepository bookCopyRepository;
+	private final BookRepository bookRepository;
+	private final BookCopyRepository bookCopyRepository;
 
 	public AddNewBookService(
-		BookRepository bookRepository,
-		BookCopyRepository bookCopyRepository
-	){
-		this.bookRepository=bookRepository;
-		this.bookCopyRepository=bookCopyRepository;
+			BookRepository bookRepository,
+			BookCopyRepository bookCopyRepository
+	) {
+		this.bookRepository = bookRepository;
+		this.bookCopyRepository = bookCopyRepository;
 	}
 
-	public Map<String,String> addNewBook(NewBookDTO newBookDTO, MultipartFile image) throws IOException {
+	public Map<String, String> addNewBook(NewBookDTO newBookDTO, MultipartFile image) throws IOException {
 
-		String uploadDir="uploads/";
-		File folder=new File(uploadDir);
+		String uploadDir = "uploads/";
+		File folder = new File(uploadDir);
 
-		if(!folder.exists()){
+		if (!folder.exists()) {
 			folder.mkdirs();
 		}
 
 		String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
 		Path filePath = Paths.get(uploadDir + fileName);
 		Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-		String imageUrl = "http://localhost:8080/uploads/" + fileName;
+		String imageUrl = "http://localhost:8080/books/images/" + fileName;
 
 
-
-		Book book=new Book();
+		Book book = new Book();
 		book.setTitle(newBookDTO.getTitle());
 		book.setAuthor(newBookDTO.getAuthor());
 		book.setPrice(newBookDTO.getPrice());
 		book.setImageUrl(imageUrl);
-		List<BookCopy> copies=new ArrayList<>();
-		int n_of_copies=newBookDTO.getCopies();
+		List<BookCopy> copies = new ArrayList<>();
+		int n_of_copies = newBookDTO.getCopies();
 
-		for(int i=0;i<n_of_copies;i++){
-			BookCopy copy=new BookCopy();
+		for (int i = 0; i < n_of_copies; i++) {
+			BookCopy copy = new BookCopy();
 			copy.setBook(book);
 			copy.setStatus(BookCopy.status.AVAILABLE);
 			copies.add(copy);
@@ -68,6 +67,6 @@ public class AddNewBookService {
 
 		bookRepository.save(book);
 
-		return Map.of("Message","Successfully added the new book");
+		return Map.of("Message", "Successfully added the new book");
 	}
 }
