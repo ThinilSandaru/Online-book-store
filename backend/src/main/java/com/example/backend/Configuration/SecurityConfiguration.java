@@ -35,7 +35,12 @@ public class SecurityConfiguration {
 				.authorizeHttpRequests(req-> req
 						.requestMatchers("/register/**").permitAll()
 						.requestMatchers("/authenticate/**").permitAll()
+						.requestMatchers(
+								"/swagger-ui/**",
+								"/v3/api-docs/**"
+						).permitAll()
 						.requestMatchers("/owner/**").hasRole("OWNER")
+						.requestMatchers("/admin/**").hasRole("EMPLOYEE")
 						.anyRequest().authenticated()
 				)
 				.sessionManagement(
