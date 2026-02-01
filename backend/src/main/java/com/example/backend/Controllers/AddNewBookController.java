@@ -9,7 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/owner")
+@RequestMapping({"/owner","/admin"})
 public class AddNewBookController {
 
 	private AddNewBookService addNewBookService;

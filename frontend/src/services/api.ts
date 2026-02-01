@@ -54,3 +54,88 @@ export const validateAdminToken = async (token: string): Promise<boolean> => {
         return false;
     }
 };
+
+export interface NewBookData {
+    title: string;
+    ssn: string;
+    author: string;
+    price: string;
+    copies: string;
+    image: File;
+}
+
+export const addNewBook = async (bookData: NewBookData, token: string, role: 'owner' | 'admin'): Promise<any> => {
+    const formData = new FormData();
+    formData.append('title', bookData.title);
+    formData.append('ssn', bookData.ssn);
+    formData.append('author', bookData.author);
+    formData.append('price', bookData.price);
+    formData.append('copies', bookData.copies);
+    formData.append('image', bookData.image);
+
+    const endpoint = role === 'admin' ? '/admin/add/new/book' : '/owner/add/new/book';
+
+    const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to add book');
+    }
+
+    return await response.json();
+};
+
+export interface RegisterEmployeeData {
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+    password: string;
+}
+
+export const registerEmployee = async (employeeData: RegisterEmployeeData, token: string): Promise<any> => {
+    const response = await fetch(`${API_URL}/owner/register/employee`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(employeeData),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to register employee');
+    }
+
+    return await response.json();
+};
+
+export type Employee = {
+    id: number;
+    email: string;
+    name: string;
+    phoneNumber: string;
+};
+
+export const getAllEmployees = async (token: string): Promise<Employee[]> => {
+    const response = await fetch(`${API_URL}/owner/get/all/employees`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to fetch employees');
+    }
+
+    return await response.json();
+};

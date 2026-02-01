@@ -13,6 +13,7 @@ import AdminLogin from './pages/admin/AdminLogin';
 import DashboardHome from './pages/admin/DashboardHome';
 import DashboardBooks from './pages/admin/DashboardBooks';
 import AddBook from './pages/admin/AddBook';
+import CreateAdmin from './pages/admin/CreateAdmin';
 import ManageAdmins from './pages/admin/ManageAdmins';
 import AdminDashboardHome from './pages/admin/AdminDashboardHome';
 
@@ -40,6 +41,7 @@ function App() {
               <Route index element={<DashboardHome />} />
               <Route path="books" element={<DashboardBooks />} />
               <Route path="add-book" element={<AddBook />} />
+              <Route path="create-admin" element={<CreateAdmin />} />
               <Route path="admins" element={<ManageAdmins />} />
             </Route>
 
@@ -48,7 +50,6 @@ function App() {
               <Route index element={<AdminDashboardHome />} />
               <Route path="books" element={<DashboardBooks />} />
               <Route path="add-book" element={<AddBook />} />
-              <Route path="admins" element={<ManageAdmins />} />
             </Route>
           </Route>
 

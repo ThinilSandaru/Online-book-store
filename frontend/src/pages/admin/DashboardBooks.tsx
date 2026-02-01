@@ -1,16 +1,98 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, X, ImageIcon } from 'lucide-react';
 import booksData from '../../data/books.json';
 import type { Book } from '../../types';
+import { API_URL } from '../../services/api';
 
 const DashboardBooks: React.FC = () => {
     const [books] = useState<Book[]>(booksData as Book[]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Form fields
+    const [title, setTitle] = useState('');
+    const [ssn, setSsn] = useState('');
+    const [author, setAuthor] = useState('');
+    const [price, setPrice] = useState('');
+    const [copies, setCopies] = useState('');
+    const [image, setImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     const filteredBooks = books.filter(book =>
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.author.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImage(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const resetForm = () => {
+        setTitle('');
+        setSsn('');
+        setAuthor('');
+        setPrice('');
+        setCopies('');
+        setImage(null);
+        setImagePreview(null);
+        setSubmitMessage(null);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setSubmitMessage(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('ssn', ssn);
+            formData.append('author', author);
+            formData.append('price', price);
+            formData.append('copies', copies);
+            if (image) {
+                formData.append('image', image);
+            }
+
+            const response = await fetch(`${API_URL}/owner/add/new/book`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                await response.json();
+                setSubmitMessage({ type: 'success', text: 'Book added successfully!' });
+                setTimeout(() => {
+                    resetForm();
+                    setShowAddModal(false);
+                }, 2000);
+            } else {
+                const errorData = await response.json().catch(() => null);
+                setSubmitMessage({
+                    type: 'error',
+                    text: errorData?.message || 'Failed to add book. Please try again.'
+                });
+            }
+        } catch (error) {
+            console.error('Error adding book:', error);
+            setSubmitMessage({
+                type: 'error',
+                text: 'An error occurred. Please check your connection and try again.'
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -19,7 +101,10 @@ const DashboardBooks: React.FC = () => {
                     <h2 className="text-2xl font-bold text-gray-800">Manage Books</h2>
                     <p className="text-gray-500">View and manage your book inventory</p>
                 </div>
-                <button className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
                     <Plus size={20} />
                     <span>Add New Book</span>
                 </button>
@@ -90,6 +175,206 @@ const DashboardBooks: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Add Book Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="bg-primary p-6 flex justify-between items-center sticky top-0">
+                            <div>
+                                <h3 className="text-2xl font-bold text-white">Add New Book</h3>
+                                <p className="text-blue-100 text-sm mt-1">Fill in the book details</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowAddModal(false);
+                                    resetForm();
+                                }}
+                                className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                            {/* Success/Error Message */}
+                            {submitMessage && (
+                                <div className={`p-4 rounded-lg border ${submitMessage.type === 'success'
+                                    ? 'bg-green-50 border-green-200 text-green-800'
+                                    : 'bg-red-50 border-red-200 text-red-800'
+                                    }`}>
+                                    {submitMessage.text}
+                                </div>
+                            )}
+
+                            {/* Book Title */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Book Title <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="Enter book title"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+
+                            {/* SSN */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    SSN (Serial Number) <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={ssn}
+                                    onChange={(e) => setSsn(e.target.value)}
+                                    placeholder="Enter SSN"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+
+                            {/* Author */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Author <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={author}
+                                    onChange={(e) => setAuthor(e.target.value)}
+                                    placeholder="Enter author name"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+
+                            {/* Price and Copies Row */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Price */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Price (Rs.) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        step="0.01"
+                                        min="0"
+                                        value={price}
+                                        onChange={(e) => setPrice(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+
+                                {/* Copies */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Number of Copies <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        value={copies}
+                                        onChange={(e) => setCopies(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Image Upload */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Book Cover Image <span className="text-red-500">*</span>
+                                </label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                                    {imagePreview ? (
+                                        <div className="space-y-4">
+                                            <img
+                                                src={imagePreview}
+                                                alt="Preview"
+                                                className="mx-auto max-h-48 rounded-lg shadow-md"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setImage(null);
+                                                    setImagePreview(null);
+                                                }}
+                                                className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                            >
+                                                Remove Image
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="cursor-pointer">
+                                            <div className="flex flex-col items-center space-y-3">
+                                                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center">
+                                                    <ImageIcon className="w-8 h-8 text-primary" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        Click to upload or drag and drop
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        PNG, JPG, JPEG (MAX. 5MB)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="file"
+                                                required
+                                                accept="image/png,image/jpeg,image/jpg"
+                                                onChange={handleImageChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex space-x-4 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        resetForm();
+                                    }}
+                                    className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="flex-1 px-6 py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isSubmitting ? (
+                                        <span className="flex items-center justify-center space-x-2">
+                                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                            </svg>
+                                            <span>Adding...</span>
+                                        </span>
+                                    ) : (
+                                        'Add Book'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
