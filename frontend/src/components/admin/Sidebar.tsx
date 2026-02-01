@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, UserCog, PlusCircle, LogOut } from 'lucide-react';
+import { LayoutDashboard, BookOpen, UserCog, PlusCircle, LogOut, UserPlus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar: React.FC = () => {
@@ -11,8 +11,14 @@ const Sidebar: React.FC = () => {
         { to: basePath, icon: <LayoutDashboard size={20} />, label: 'Dashboard', end: true },
         { to: `${basePath}/books`, icon: <BookOpen size={20} />, label: 'Manage Books' },
         { to: `${basePath}/add-book`, icon: <PlusCircle size={20} />, label: 'Add New Book' },
+        { to: `${basePath}/create-admin`, icon: <UserPlus size={20} />, label: 'Create Admin' },
         { to: `${basePath}/admins`, icon: <UserCog size={20} />, label: 'Manage Admins' },
-    ];
+    ].filter(item => {
+        if (role === 'admin' && (item.label === 'Create Admin' || item.label === 'Manage Admins')) {
+            return false;
+        }
+        return true;
+    });
 
     return (
         <div className="w-64 bg-slate-900 text-white min-h-screen flex flex-col shadow-xl">
