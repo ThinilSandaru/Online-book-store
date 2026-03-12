@@ -21,6 +21,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 	public @Nullable UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 		User user=userRepo.findByEmail(email)
 				.orElseThrow(()->new UsernameNotFoundException("The email could not be found."));
-		return new CustomerUserDetails(user);
+		return new CustomUserDetails(user);
 	}
 }

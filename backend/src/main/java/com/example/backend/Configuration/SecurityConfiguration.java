@@ -39,8 +39,12 @@ public class SecurityConfiguration {
 								"/swagger-ui/**",
 								"/v3/api-docs/**"
 						).permitAll()
+						.requestMatchers("/user/get/inventory").permitAll()
+						.requestMatchers("/customer/**").hasRole("USER")
 						.requestMatchers("/owner/**").hasRole("OWNER")
 						.requestMatchers("/admin/**").hasRole("EMPLOYEE")
+						.requestMatchers("/book/**").permitAll()
+						.requestMatchers("/books/images/**").permitAll()
 						.anyRequest().authenticated()
 				)
 				.sessionManagement(

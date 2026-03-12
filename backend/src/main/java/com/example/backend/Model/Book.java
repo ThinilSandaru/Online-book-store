@@ -20,4 +20,7 @@ public class Book {
 
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
 	private List<BookCopy> copies;
+
+	@OneToMany(mappedBy = "book",cascade = CascadeType.ALL)
+	private List<OrderItem> orderItemList;
 }

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.AnyDiscriminatorImplicitValues;
 
+import java.util.List;
+
 @Entity
 @Table(name = "user")
 @Data
@@ -28,6 +30,15 @@ public class User {
 	@OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
 	@JsonManagedReference
 	private Employee employee;
+
+
+	@OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
+	@JsonManagedReference
+	private Customer customer;
+
+	@OneToMany(mappedBy = "user",cascade=CascadeType.ALL)
+	@JsonManagedReference
+	private List<Order> orderList;
 
 	public enum role{
 		USER,

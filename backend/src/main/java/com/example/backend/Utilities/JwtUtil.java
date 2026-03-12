@@ -1,13 +1,12 @@
 package com.example.backend.Utilities;
 
-import com.example.backend.Configuration.CustomerUserDetails;
+import com.example.backend.Configuration.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -38,8 +37,8 @@ public class JwtUtil {
 		return extractAllClaims(token).getSubject();
 	}
 
-	public boolean isValid(String token, CustomerUserDetails customerUserDetails){
-		return isExpired(token) && customerUserDetails.getUsername().equals(getEmail(token));
+	public boolean isValid(String token, CustomUserDetails customUserDetails){
+		return isExpired(token) && customUserDetails.getUsername().equals(getEmail(token));
 	}
 
 	private boolean isExpired(String token){
