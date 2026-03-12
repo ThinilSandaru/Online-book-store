@@ -1,15 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import Features from '../components/Features';
 import BookCard from '../components/BookCard';
-import booksData from '../data/books.json';
-import type { Book } from '../types';
+import { getUserInventory, type InventoryBook } from '../services/api';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 
 const Home: React.FC = () => {
-    // Cast json data to Book type
-    const books: Book[] = booksData as Book[];
+    const [books, setBooks] = useState<InventoryBook[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                const data = await getUserInventory();
+                setBooks(data);
+            } catch (err) {
+                console.error('Failed to fetch featured books:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBooks();
+    }, []);
+
     const featuredBooks = books.slice(0, 4);
 
     return (
@@ -23,19 +37,29 @@ const Home: React.FC = () => {
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Books</h2>
                         <p className="text-gray-600">Handpicked selections just for you</p>
                     </div>
-                    <Link to="/browse" className="hidden md:flex items-center text-primary font-semibold hover:text-primary-dark transition-colors">
+                    <Link to="/user/browse" className="hidden md:flex items-center text-primary font-semibold hover:text-primary-dark transition-colors">
                         View All <ArrowRight className="ml-1 w-4 h-4" />
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {featuredBooks.map(book => (
-                        <BookCard key={book.id} book={book} />
-                    ))}
-                </div>
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-16">
+                        <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                    </div>
+                ) : featuredBooks.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                        {featuredBooks.map((book) => (
+                            <BookCard key={book.id} book={book} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 text-gray-500">
+                        <p>No books available right now. Check back soon!</p>
+                    </div>
+                )}
 
                 <div className="mt-8 text-center md:hidden">
-                    <Link to="/browse" className="inline-flex items-center text-primary font-semibold hover:text-primary-dark transition-colors">
+                    <Link to="/user/browse" className="inline-flex items-center text-primary font-semibold hover:text-primary-dark transition-colors">
                         View All <ArrowRight className="ml-1 w-4 h-4" />
                     </Link>
                 </div>

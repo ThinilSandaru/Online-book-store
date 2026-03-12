@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, UserCog, PlusCircle, LogOut, UserPlus } from 'lucide-react';
+import { LayoutDashboard, BookOpen, UserCog, PlusCircle, LogOut, UserPlus, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar: React.FC = () => {
@@ -11,6 +11,7 @@ const Sidebar: React.FC = () => {
         { to: basePath, icon: <LayoutDashboard size={20} />, label: 'Dashboard', end: true },
         { to: `${basePath}/books`, icon: <BookOpen size={20} />, label: 'Manage Books' },
         { to: `${basePath}/add-book`, icon: <PlusCircle size={20} />, label: 'Add New Book' },
+        { to: `${basePath}/orders`, icon: <ShoppingBag size={20} />, label: 'Orders' },
         { to: `${basePath}/create-admin`, icon: <UserPlus size={20} />, label: 'Create Admin' },
         { to: `${basePath}/admins`, icon: <UserCog size={20} />, label: 'Manage Admins' },
     ].filter(item => {
@@ -24,7 +25,7 @@ const Sidebar: React.FC = () => {
         <div className="w-64 bg-slate-900 text-white min-h-screen flex flex-col shadow-xl">
             <div className="p-6 border-b border-slate-800">
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-200 bg-clip-text text-transparent">
-                    Admin Portal
+                    {role === 'owner' ? 'Owner Portal' : 'Admin Portal'}
                 </h2>
             </div>
 

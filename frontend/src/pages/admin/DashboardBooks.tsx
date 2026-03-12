@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Search, X, ImageIcon } from 'lucide-react';
-import booksData from '../../data/books.json';
-import type { Book } from '../../types';
-import { API_URL } from '../../services/api';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, X, ImageIcon, Loader2, AlertCircle, BookOpen } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { API_URL, getInventory, type InventoryBook } from '../../services/api';
+import AuthenticatedImage from '../../components/admin/AuthenticatedImage';
 
 const DashboardBooks: React.FC = () => {
-    const [books] = useState<Book[]>(booksData as Book[]);
+    const { token, role } = useAuth();
+    const [books, setBooks] = useState<InventoryBook[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,6 +22,25 @@ const DashboardBooks: React.FC = () => {
     const [copies, setCopies] = useState('');
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+    const fetchBooks = async () => {
+        if (!token) return;
+        try {
+            setIsLoading(true);
+            setError(null);
+            const data = await getInventory(token, role as 'owner' | 'admin');
+            setBooks(data);
+        } catch (err) {
+            console.error('Failed to fetch inventory:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load inventory');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBooks();
+    }, [token]);
 
     const filteredBooks = books.filter(book =>
         book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,8 +86,13 @@ const DashboardBooks: React.FC = () => {
                 formData.append('image', image);
             }
 
-            const response = await fetch(`${API_URL}/owner/add/new/book`, {
+            const endpoint = role === 'admin' ? '/admin/add/new/book' : '/owner/add/new/book';
+
+            const response = await fetch(`${API_URL}${endpoint}`, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
                 body: formData,
             });
 
@@ -75,6 +102,7 @@ const DashboardBooks: React.FC = () => {
                 setTimeout(() => {
                     resetForm();
                     setShowAddModal(false);
+                    fetchBooks(); // Refresh the list
                 }, 2000);
             } else {
                 const errorData = await response.json().catch(() => null);
@@ -93,6 +121,24 @@ const DashboardBooks: React.FC = () => {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl text-center">
+                <AlertCircle className="mx-auto mb-3" size={32} />
+                <p className="font-semibold">Failed to load books</p>
+                <p className="text-sm mt-1">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -130,10 +176,8 @@ const DashboardBooks: React.FC = () => {
                     <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Book Detail</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
                             <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
                             <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">Stock</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-gray-600 uppercase tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -141,34 +185,27 @@ const DashboardBooks: React.FC = () => {
                             <tr key={book.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center space-x-4">
-                                        <img src={book.imageUrl} alt="" className="w-12 h-16 object-cover rounded shadow-sm" />
+                                        {book.imageUrl ? (
+                                            <AuthenticatedImage src={book.imageUrl} alt="" className="w-12 h-16 object-cover rounded shadow-sm" />
+                                        ) : (
+                                            <div className="w-12 h-16 bg-gray-100 rounded shadow-sm flex items-center justify-center text-gray-400">
+                                                <BookOpen size={20} />
+                                            </div>
+                                        )}
                                         <div>
                                             <div className="font-bold text-gray-900">{book.title}</div>
                                             <div className="text-sm text-gray-500">{book.author}</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                                        {book.category}
-                                    </span>
-                                </td>
                                 <td className="px-6 py-4 font-medium text-gray-900">
                                     Rs. {book.price.toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center space-x-2">
-                                        <span className={`w-2 h-2 rounded-full ${book.stockCount > 10 ? 'bg-green-500' : book.stockCount > 0 ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
-                                        <span className="text-gray-700">{book.stockCount} copies</span>
+                                        <span className={`w-2 h-2 rounded-full ${book.copyCount > 10 ? 'bg-green-500' : book.copyCount > 0 ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
+                                        <span className="text-gray-700">{book.copyCount} copies</span>
                                     </div>
-                                </td>
-                                <td className="px-6 py-4 text-right space-x-2">
-                                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                        <Trash2 size={18} />
-                                    </button>
                                 </td>
                             </tr>
                         ))}

@@ -23,7 +23,7 @@ const Hero: React.FC = () => {
                             Explore our vast collection of books across all genres. From timeless classics to modern bestsellers, we have stories that inspire.
                         </p>
                         <div className="flex flex-wrap gap-4 pt-4">
-                            <Link to="/browse" className="bg-white text-primary-dark font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transition duration-300 flex items-center group">
+                            <Link to="/user/browse" className="bg-white text-primary-dark font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transition duration-300 flex items-center group">
                                 Browse Books
                                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Link>

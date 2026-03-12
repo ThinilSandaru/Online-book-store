@@ -1,78 +1,152 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Star } from 'lucide-react';
-import type { Book } from '../types';
+import React, { useState } from 'react';
+import { ShoppingCart, BookOpen, Plus, Minus, Loader2, Check } from 'lucide-react';
+import type { InventoryBook } from '../services/api';
+import { addToCart } from '../services/api';
+import { useCustomerAuth } from '../context/CustomerAuthContext';
 
 interface BookCardProps {
-    book: Book;
+    book: InventoryBook;
 }
 
 const BookCard: React.FC<BookCardProps> = ({ book }) => {
-    const discountPercentage = book.originalPrice
-        ? Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)
-        : 0;
+    const { isAuthenticated, customerToken, openAuthModal } = useCustomerAuth();
+    const [quantity, setQuantity] = useState(1);
+    const [isAdding, setIsAdding] = useState(false);
+    const [addedSuccess, setAddedSuccess] = useState(false);
+    const [cartError, setCartError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const inStock = book.copyCount > 0;
+
+    const handleIncrement = () => {
+        if (quantity < book.copyCount) {
+            setQuantity(prev => prev + 1);
+        }
+    };
+
+    const handleDecrement = () => {
+        if (quantity > 1) {
+            setQuantity(prev => prev - 1);
+        }
+    };
+
+    const handleAddToCart = async () => {
+        if (!isAuthenticated || !customerToken) {
+            openAuthModal();
+            return;
+        }
+
+        setIsAdding(true);
+        setCartError(null);
+        setSuccessMessage(null);
+
+        try {
+            const message = await addToCart(book.id, quantity, customerToken);
+            setAddedSuccess(true);
+            setSuccessMessage(message || 'Successfully added');
+            setTimeout(() => {
+                setAddedSuccess(false);
+                setSuccessMessage(null);
+                setQuantity(1);
+            }, 2500);
+        } catch (err) {
+            setCartError(err instanceof Error ? err.message : 'Failed to add');
+            setTimeout(() => setCartError(null), 3000);
+        } finally {
+            setIsAdding(false);
+        }
+    };
 
     return (
         <div className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 border border-gray-100 overflow-hidden flex flex-col h-full group">
             <div className="relative aspect-[2/3] overflow-hidden bg-gray-100">
-                <img
-                    src={book.imageUrl}
-                    alt={book.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                {discountPercentage > 0 && (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                        {discountPercentage}% OFF
-                    </span>
+                {book.imageUrl ? (
+                    <img
+                        src={book.imageUrl}
+                        alt={book.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <BookOpen size={48} />
+                        <span className="text-sm mt-2">No Image</span>
+                    </div>
                 )}
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {/* Quick view or wishlist button could go here */}
-                </div>
             </div>
 
             <div className="p-4 flex flex-col flex-grow">
-                <div className="text-xs text-primary font-semibold uppercase tracking-wide mb-1">
-                    {book.category}
-                </div>
-                <Link to={`/book/${book.id}`}>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1 hover:text-primary transition-colors">
-                        {book.title}
-                    </h3>
-                </Link>
+                <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-1" title={book.title}>
+                    {book.title}
+                </h3>
                 <p className="text-gray-500 text-sm mb-3 line-clamp-1">{book.author}</p>
 
-                <div className="flex items-center mb-4">
-                    <div className="flex text-yellow-400 text-xs">
-                        {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-current" />
-                        ))}
-                    </div>
-                    <span className="text-xs text-gray-400 ml-1">(4.8)</span>
-                </div>
-
-                <div className="mt-auto flex items-center justify-between">
-                    <div>
+                <div className="mt-auto space-y-3">
+                    <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-gray-900">Rs. {book.price.toLocaleString()}</span>
-                        {book.originalPrice && (
-                            <span className="text-xs text-gray-400 line-through ml-2">
-                                Rs. {book.originalPrice.toLocaleString()}
-                            </span>
-                        )}
                     </div>
-                    <button
-                        className={`p-2 rounded-full transition-colors ${book.stockCount > 0
-                            ? 'bg-blue-50 text-primary hover:bg-primary hover:text-white'
-                            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            }`}
-                        disabled={book.stockCount === 0}
-                        title={book.stockCount > 0 ? "Add to Cart" : "Out of Stock"}
-                    >
-                        <ShoppingCart className="w-5 h-5" />
-                    </button>
+
+                    {inStock ? (
+                        <>
+                            {/* Quantity selector */}
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                    <button
+                                        onClick={handleDecrement}
+                                        disabled={quantity <= 1}
+                                        className="p-2 text-gray-600 hover:bg-gray-100 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                    <span className="px-3 font-bold text-gray-900 text-sm min-w-[2rem] text-center select-none">
+                                        {quantity}
+                                    </span>
+                                    <button
+                                        onClick={handleIncrement}
+                                        disabled={quantity >= book.copyCount}
+                                        className="p-2 text-gray-600 hover:bg-gray-100 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={handleAddToCart}
+                                    disabled={isAdding || addedSuccess}
+                                    className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-all shadow-sm hover:shadow-md disabled:cursor-not-allowed ${addedSuccess
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-primary hover:bg-primary-dark text-white'
+                                        }`}
+                                    title="Add to Cart"
+                                >
+                                    {isAdding ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : addedSuccess ? (
+                                        <Check className="w-4 h-4" />
+                                    ) : (
+                                        <ShoppingCart className="w-4 h-4" />
+                                    )}
+                                    <span>{addedSuccess ? 'Added!' : 'Add'}</span>
+                                </button>
+                            </div>
+
+                            {successMessage && (
+                                <p className="text-xs text-green-600 font-medium bg-green-50 px-3 py-1.5 rounded-lg text-center">{successMessage}</p>
+                            )}
+
+                            {cartError && (
+                                <p className="text-xs text-red-500 font-medium">{cartError}</p>
+                            )}
+
+                            {book.copyCount < 5 && (
+                                <p className="text-xs text-red-500 font-medium">Only {book.copyCount} left in stock!</p>
+                            )}
+                        </>
+                    ) : (
+                        <div className="bg-red-50 text-red-600 text-xs font-semibold text-center py-2 rounded-lg">
+                            Out of Stock
+                        </div>
+                    )}
                 </div>
-                {book.stockCount < 5 && book.stockCount > 0 && (
-                    <p className="text-xs text-red-500 mt-2 font-medium">Only {book.stockCount} left in stock!</p>
-                )}
             </div>
         </div>
     );
